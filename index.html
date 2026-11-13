@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archipelago Overlay Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Rubik:wght@400;600;800&family=Bebas+Neue&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap">
+
+<!-- ============ OVERLAY CSS (copied into exported overlays) ============ -->
+<style id="overlay-css">
+.apo{--acc:#7c5cff;--txt:#fff;--sub:rgba(255,255,255,.65);--panel:rgba(12,12,20,.78);--track:rgba(255,255,255,.14);--goal:#ffcf3f;
+  font-family:var(--font,Inter),system-ui,sans-serif;color:var(--txt);font-size:calc(16px * var(--scale,1));line-height:1.25;box-sizing:border-box}
+.apo *{box-sizing:border-box}
+.apo.bg-panel .apo-box{background:var(--panel);border-radius:.7em;padding:.7em .85em;box-shadow:0 .3em 1.2em rgba(0,0,0,.35)}
+.apo.bg-solid{background:var(--solid,#111);padding:.6em}
+.apo.bg-transparent .apo-box{text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.9)}
+.apo-title{font-weight:800;font-size:.8em;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);margin-bottom:.45em}
+.apo-row{display:grid;grid-template-columns:1.4em 1fr auto;gap:.15em .55em;align-items:center;padding:.28em 0}
+.apo-rank{font-weight:800;color:var(--sub);font-size:.85em;text-align:right}
+.apo-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.apo-game{color:var(--sub);font-size:.72em;font-weight:400;margin-left:.4em}
+.apo-val{font-weight:800;font-variant-numeric:tabular-nums;font-size:.9em}
+.apo-val small{color:var(--sub);font-weight:400;font-size:.8em;margin-left:.35em}
+.apo-bar{grid-column:2 / 4;height:.42em;border-radius:1em;background:var(--track);overflow:hidden}
+.apo-bar>i{display:block;height:100%;width:0;border-radius:1em;background:var(--acc);transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.apo-row.goal .apo-bar>i{background:var(--goal)}
+.apo-row.goal .apo-name::after{content:" \2605";color:var(--goal)}
+.apo-row.flash{animation:apoFlash 1.4s ease}
+@keyframes apoFlash{0%{background:color-mix(in srgb,var(--acc) 45%,transparent)}100%{background:transparent}}
+.apo-row.off .apo-name{opacity:.55}
+/* horizontal */
+.apo.lay-h .apo-list{display:flex;flex-wrap:wrap;gap:.5em 1.2em}
+.apo.lay-h .apo-row{min-width:9em;flex:1 1 9em;padding:0}
+.apo.lay-h .apo-rank{display:none}
+.apo.lay-h .apo-row{grid-template-columns:1fr auto}
+.apo.lay-h .apo-bar{grid-column:1 / 3}
+.apo.lay-h .apo-title{margin-bottom:.3em}
+/* total */
+.apo-total .apo-big{font-size:2.4em;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.apo-total .apo-meta{color:var(--sub);font-size:.8em;margin:.35em 0 .5em}
+.apo-total .apo-bar{height:.7em}
+/* card */
+.apo-card .apo-cname{font-size:1.5em;font-weight:800;line-height:1.1}
+.apo-card .apo-cgame{color:var(--sub);font-size:.8em;margin-bottom:.5em}
+.apo-card .apo-cnum{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.3em}
+.apo-card .apo-cnum b{font-size:1.6em;font-variant-numeric:tabular-nums}
+.apo-card .apo-bar{height:.6em}
+.apo-card ul{list-style:none;margin:.6em 0 0;padding:0;font-size:.8em}
+.apo-card li{padding:.2em 0;border-top:1px solid var(--track);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.apo-card li span{color:var(--sub)}
+/* feed */
+.apo-feed{display:flex;flex-direction:column;gap:.4em}
+.apo-feed.up{flex-direction:column-reverse}
+.apo-ev{display:flex;gap:.55em;align-items:center;animation:apoIn .45s cubic-bezier(.2,.8,.2,1) both}
+.apo.bg-panel .apo-ev{background:var(--panel);border-radius:.6em;padding:.5em .75em;box-shadow:0 .2em .8em rgba(0,0,0,.35)}
+.apo.bg-transparent .apo-ev{text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.9)}
+.apo-ev.out{animation:apoOut .5s ease forwards}
+.apo-ev .dot{flex:0 0 .55em;height:.55em;border-radius:50%;background:var(--sub)}
+.apo-ev.prog .dot{background:var(--acc);box-shadow:0 0 .5em var(--acc)}
+.apo-ev.useful .dot{background:#4fc3f7}
+.apo-ev.trap .dot{background:#ff5d5d}
+.apo-ev.goal .dot{background:var(--goal);box-shadow:0 0 .6em var(--goal)}
+.apo-ev .who{font-weight:700}
+.apo-ev .item{font-weight:800;color:var(--acc)}
+.apo-ev.useful .item{color:#4fc3f7}.apo-ev.trap .item{color:#ff7a7a}.apo-ev.filler .item{color:var(--txt)}
+.apo-ev .t{font-size:.9em}
+@keyframes apoIn{from{opacity:0;transform:translateX(-1.2em)}to{opacity:1;transform:none}}
+@keyframes apoOut{to{opacity:0;transform:translateX(1.2em)}}
+.apo-err{font-size:.8em;color:#ffb4b4;background:rgba(60,0,0,.6);padding:.4em .6em;border-radius:.4em}
+.apo-empty{color:var(--sub);font-size:.8em}
+</style>
+
+<!-- ============ STUDIO CSS ============ -->
+<style>
+:root{--bg:#0f1016;--card:#181a23;--line:#2a2d3a;--fg:#eceef6;--muted:#9aa0b4;--pri:#7c5cff;--ok:#3ecf8e;--warn:#ffb020}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f4f5f9;--card:#fff;--line:#dde0ea;--fg:#171923;--muted:#5d6377}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 Inter,system-ui,sans-serif}
+body.overlay-mode{background:transparent!important}
+header{display:flex;align-items:center;gap:.8em;padding:14px 20px;border-bottom:1px solid var(--line)}
+header h1{font-size:17px;margin:0;font-weight:800}
+header .logo{width:26px;height:26px;border-radius:7px;background:conic-gradient(#ff5d5d,#ffb020,#3ecf8e,#4fc3f7,#7c5cff,#ff5d5d)}
+header .st{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+header .st i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+header .st.live i{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+header .st.err i{background:#ff5d5d}
+main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:16px;padding:16px 20px;max-width:1500px;margin:0 auto}
+@media (max-width:860px){main{grid-template-columns:1fr;padding:12px 16px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.card h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+input[type=text],input[type=number],select{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit}
+input[type=color]{width:100%;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:2px}
+input[type=range]{width:100%}
+.row{display:flex;gap:8px;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+button{font:inherit;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:8px 12px;cursor:pointer}
+button.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+button:disabled{opacity:.5;cursor:default}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{flex:1 1 auto;padding:7px 8px;font-size:12.5px}
+.seg button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.chk{display:flex;align-items:center;gap:8px;margin:8px 0 0;color:var(--fg);font-size:13px;cursor:pointer}
+.plist{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.plist .p{display:grid;grid-template-columns:20px 1fr 110px;gap:6px;align-items:center;padding:5px 8px;border-bottom:1px solid var(--line);font-size:12.5px}
+.plist .p:last-child{border-bottom:0}
+.plist .p input[type=text]{padding:4px 6px;font-size:12px}
+.plist .p .g{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msg{font-size:12.5px;margin-top:8px;color:var(--muted)}
+.msg.err{color:#ff7a7a}
+.stage{position:sticky;top:12px}
+.preview{border-radius:12px;border:1px solid var(--line);min-height:360px;padding:24px;overflow:auto;
+  background:#2b2f3a;background-image:linear-gradient(45deg,#353a47 25%,transparent 25%),linear-gradient(-45deg,#353a47 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#353a47 75%),linear-gradient(-45deg,transparent 75%,#353a47 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}
+.preview.game{background:linear-gradient(135deg,#1d4f3c,#284a7a 50%,#5a2c62)}
+.pvbar{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.pvbar .sp{flex:1}
+.out code{display:block;word-break:break-all;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;font:11.5px "JetBrains Mono",monospace;max-height:90px;overflow:auto}
+.steps{margin:6px 0 0;padding-left:18px;color:var(--muted);font-size:12.5px}
+.steps b{color:var(--fg)}
+.hint{font-size:12px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+
+<!-- ============ SHARED RUNTIME (copied into exported overlays) ============ -->
+<script id="runtime">
+const APO = (() => {
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const dpCache = {};
+
+  function parseLink(input) {
+    input = (input || "").trim();
+    if (!input) throw new Error("Paste a room or tracker link first.");
+    if (!/^https?:\/\//i.test(input)) input = "https://" + input;
+    let u; try { u = new URL(input); } catch { throw new Error("That doesn't look like a link."); }
+    const m = u.pathname.match(/\/(room|tracker|generic_tracker|sphere_tracker)\/([A-Za-z0-9_-]+)/);
+    if (!m) throw new Error("Couldn't find a /room/… or /tracker/… id in that link.");
+    return { origin: u.origin, kind: m[1] === "room" ? "room" : "tracker", id: m[2] };
+  }
+
+  async function getJSON(url) {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error(`HTTP ${r.status} for ${url.replace(/^https?:\/\/[^/]+/, "")}`);
+    return r.json();
+  }
+
+  // ---------- Live session against an Archipelago webhost ----------
+  class Session {
+    constructor(link) { this.link = link; this.players = []; this.events = []; this.prevItems = {}; this.prevStatus = {}; this.listeners = []; this.ready = false; this.error = null; }
+    on(fn) { this.listeners.push(fn); }
+    emit(newEvents) { this.listeners.forEach(f => f(this, newEvents || [])); }
+    key(t, p) { return t + ":" + p; }
+
+    async init() {
+      const L = parseLink(this.link); this.origin = L.origin;
+      this.names = {};
+      if (L.kind === "room") {
+        const rs = await getJSON(`${L.origin}/api/room_status/${L.id}`);
+        this.trackerId = rs.tracker;
+        (rs.players || []).forEach((p, i) => { this.names[i + 1] = { name: p[0], game: p[1] }; });
+      } else this.trackerId = L.id;
+      const st = await getJSON(`${L.origin}/api/static_tracker/${this.trackerId}`);
+      this.totals = {}; this.games = {};
+      (st.player_locations_total || []).forEach(x => this.totals[this.key(x.team, x.player)] = x.total_locations);
+      (st.player_game || []).forEach(x => this.games[x.player] = x.game);
+      this.itemNames = {};
+      const dp = st.datapackage || {};
+      await Promise.all(Object.entries(dp).map(async ([game, pkg]) => {
+        try {
+          let full = pkg.item_name_to_id ? pkg : dpCache[pkg.checksum];
+          if (!full && pkg.checksum) full = dpCache[pkg.checksum] = await getJSON(`${L.origin}/api/datapackage/${pkg.checksum}`);
+          const m = {}; Object.entries((full && full.item_name_to_id) || {}).forEach(([n, id]) => m[id] = n);
+          this.itemNames[game] = m;
+        } catch (e) { this.itemNames[game] = {}; }
+      }));
+      this.ready = true;
+      await this.refresh(true);
+    }
+
+    itemName(game, id) { return (this.itemNames[game] || {})[id] || `Item #${id}`; }
+
+    async refresh(first) {
+      let d;
+      try { d = await getJSON(`${this.origin}/api/tracker/${this.trackerId}`); this.error = null; }
+      catch (e) { this.error = e.message; this.emit(); return; }
+      const by = (arr, f) => { const o = {}; (arr || []).forEach(x => o[this.key(x.team, x.player)] = f(x)); return o; };
+      const aliases = by(d.aliases, x => x.alias), checks = by(d.player_checks_done, x => x.locations.length),
+            status = by(d.player_status, x => x.status), act = by(d.activity_timers, x => x.time),
+            items = by(d.player_items_received, x => x.items);
+      const players = [];
+      for (const k of Object.keys(checks)) {
+        const [team, slot] = k.split(":").map(Number);
+        const base = this.names[slot] || {};
+        players.push({ key: k, team, slot, name: aliases[k] || base.name || `Player ${slot}`, game: this.games[slot] || base.game || "",
+          checks: checks[k], total: this.totals[k] || 0, status: status[k] || 0, active: act[k], recent: [] });
+      }
+      const pmap = Object.fromEntries(players.map(p => [p.key, p]));
+      const fresh = [];
+      for (const p of players) {
+        const list = items[p.key] || [];
+        p.recent = list.filter(it => it[2] !== 0).slice(-8).reverse().map(it => this.toEvent(it, p, pmap));
+        const prev = this.prevItems[p.key];
+        if (!first && prev !== undefined && list.length > prev)
+          list.slice(prev).forEach(it => { if (it[2] !== 0) fresh.push(this.toEvent(it, p, pmap)); });
+        this.prevItems[p.key] = list.length;
+        if (!first && this.prevStatus[p.key] !== undefined && this.prevStatus[p.key] < 30 && p.status >= 30)
+          fresh.push({ kind: "goal", to: p.name, toKey: p.key, text: "completed their goal!" });
+        this.prevStatus[p.key] = p.status;
+      }
+      this.players = players;
+      this.emit(fresh);
+    }
+
+    toEvent(it, recv, pmap) {
+      const [item, , sender, flags] = it;
+      const s = pmap[this.key(recv.team, sender)];
+      return { kind: flags & 4 ? "trap" : flags & 1 ? "prog" : flags & 2 ? "useful" : "filler",
+        item: this.itemName(recv.game, item), from: s ? s.name : `Player ${sender}`, fromKey: s && s.key,
+        to: recv.name, toKey: recv.key, self: sender === recv.slot };
+    }
+  }
+
+  // ---------- Demo session (fake data for trying things out) ----------
+  class DemoSession extends Session {
+    async init() {
+      const roster = [["Florian","A Link to the Past",216],["Mira","Super Metroid",100],["Kenji","Ocarina of Time",380],["Sasha","Hollow Knight",290],["Leo","Pokemon Red and Blue",240],["Ana","Stardew Valley",310],["Tom","Celeste",120],["Yuki","Timespinner",190]];
+      const pool = ["Hookshot","Morph Ball","Progressive Sword","Moon Pearl","Ice Beam","Mantis Claw","Bomb Bag","Lantern","Hammer","Surf HM","Golden Feather","Ocarina","Speed Booster","Dash","Rupees (20)","Arrows (10)","Heart Container","Ice Trap","Lucky Charm","Rock Smash"];
+      this.pool = pool; this.ready = true;
+      this.players = roster.map(([n, g, t], i) => ({ key: "0:" + (i + 1), team: 0, slot: i + 1, name: n, game: g, total: t, checks: Math.floor(t * (0.15 + Math.random() * 0.6)), status: 20, recent: [] }));
+      this.players[6].checks = this.players[6].total; this.players[6].status = 30;
+      this.players.forEach(p => { for (let i = 0; i < 5; i++) p.recent.push(this.fake(p)); });
+      this.emit();
+    }
+    fake(to) {
+      const from = this.players[Math.floor(Math.random() * this.players.length)];
+      const item = this.pool[Math.floor(Math.random() * this.pool.length)];
+      const kind = /Trap/.test(item) ? "trap" : /\(|Container|Charm/.test(item) ? (Math.random() < .5 ? "useful" : "filler") : "prog";
+      return { kind, item, from: from.name, fromKey: from.key, to: to.name, toKey: to.key, self: from === to };
+    }
+    async refresh() {
+      const fresh = [];
+      const n = 1 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < n; i++) {
+        const p = this.players.filter(p => p.status < 30)[Math.floor(Math.random() * 7)] || this.players[0];
+        p.checks = Math.min(p.total, p.checks + 1 + Math.floor(Math.random() * 4));
+        const ev = this.fake(p); p.recent.unshift(ev); p.recent.length = Math.min(p.recent.length, 8); fresh.push(ev);
+        if (p.checks >= p.total && p.status < 30) { p.status = 30; fresh.push({ kind: "goal", to: p.name, toKey: p.key, text: "completed their goal!" }); }
+      }
+      this.emit(fresh);
+    }
+  }
+
+  // ---------- Renderers ----------
+  const pct = p => p.total ? (p.checks / p.total) * 100 : 0;
+  const fmtPct = (v, d) => v.toFixed(v >= 100 || v === 0 ? 0 : d) + "%";
+
+  function visiblePlayers(s, cfg) {
+    let ps = s.players.map(p => ({ ...p, name: (cfg.names && cfg.names[p.key]) || p.name }));
+    if (cfg.players && cfg.players.length) ps = ps.filter(p => cfg.players.includes(p.key));
+    if (cfg.sort === "progress") ps.sort((a, b) => (b.status >= 30) - (a.status >= 30) || pct(b) - pct(a) || a.slot - b.slot);
+    else if (cfg.sort === "checks") ps.sort((a, b) => b.checks - a.checks);
+    else if (cfg.sort === "name") ps.sort((a, b) => a.name.localeCompare(b.name));
+    else ps.sort((a, b) => a.slot - b.slot);
+    if (cfg.limit > 0) ps = ps.slice(0, cfg.limit);
+    return ps;
+  }
+
+  function valText(p, cfg) {
+    const pc = fmtPct(pct(p), cfg.decimals ?? 1);
+    if (cfg.valueMode === "count") return `${p.checks}<small>/ ${p.total}</small>`;
+    if (cfg.valueMode === "both") return `${pc}<small>${p.checks}/${p.total}</small>`;
+    return pc;
+  }
+
+  function renderLeaderboard(s, cfg, flashKeys) {
+    const ps = visiblePlayers(s, cfg);
+    if (!ps.length) return `<div class="apo-box apo-empty">No players selected.</div>`;
+    return `<div class="apo-box">${cfg.title ? `<div class="apo-title">${esc(cfg.title)}</div>` : ""}<div class="apo-list">${ps.map((p, i) => `
+      <div class="apo-row${p.status >= 30 ? " goal" : ""}${flashKeys.has(p.key) ? " flash" : ""}" data-k="${esc(p.key)}">
+        <div class="apo-rank">${i + 1}</div>
+        <div class="apo-name">${esc(p.name)}${cfg.showGame && p.game ? `<span class="apo-game">${esc(p.game)}</span>` : ""}</div>
+        <div class="apo-val">${valText(p, cfg)}</div>
+        <div class="apo-bar"><i style="width:${Math.min(100, pct(p))}%"></i></div>
+      </div>`).join("")}</div></div>`;
+  }
+
+  function renderTotal(s, cfg) {
+    const ps = visiblePlayers(s, { ...cfg, limit: 0 });
+    const c = ps.reduce((a, p) => a + p.checks, 0), t = ps.reduce((a, p) => a + p.total, 0), g = ps.filter(p => p.status >= 30).length;
+    const v = t ? c / t * 100 : 0;
+    return `<div class="apo-box apo-total">${cfg.title ? `<div class="apo-title">${esc(cfg.title)}</div>` : ""}
+      <div class="apo-big">${fmtPct(v, cfg.decimals ?? 1)}</div>
+      <div class="apo-meta">${c.toLocaleString()} / ${t.toLocaleString()} checks · ${g}/${ps.length} goals</div>
+      <div class="apo-bar"><i style="width:${v}%"></i></div></div>`;
+  }
+
+  function renderCard(s, cfg) {
+    const all = visiblePlayers(s, { ...cfg, players: [], limit: 0, sort: "slot" });
+    const p = all.find(x => x.key === cfg.cardPlayer) || all[0];
+    if (!p) return `<div class="apo-box apo-empty">No player.</div>`;
+    const recent = (p.recent || []).slice(0, cfg.cardItems ?? 4);
+    return `<div class="apo-box apo-card">
+      ${cfg.title ? `<div class="apo-title">${esc(cfg.title)}</div>` : ""}
+      <div class="apo-cname">${esc(p.name)}${p.status >= 30 ? ` <span style="color:var(--goal)">&#9733;</span>` : ""}</div>
+      ${cfg.showGame ? `<div class="apo-cgame">${esc(p.game)}</div>` : ""}
+      <div class="apo-cnum"><b>${fmtPct(pct(p), cfg.decimals ?? 1)}</b><span style="color:var(--sub)">${p.checks} / ${p.total} checks</span></div>
+      <div class="apo-bar${p.status >= 30 ? " goal" : ""}"><i style="width:${pct(p)}%;${p.status >= 30 ? "background:var(--goal)" : ""}"></i></div>
+      ${recent.length ? `<ul>${recent.map(e => `<li><b style="color:${e.kind === "prog" ? "var(--acc)" : e.kind === "trap" ? "#ff7a7a" : "inherit"}">${esc(e.item)}</b> <span>${e.self ? "found it themselves" : "from " + esc((cfg.names && cfg.names[e.fromKey]) || e.from)}</span></li>`).join("")}</ul>` : ""}
+    </div>`;
+  }
+
+  function feedEventHTML(e, cfg) {
+    const nm = (k, d) => esc((cfg.names && cfg.names[k]) || d);
+    let t;
+    if (e.kind === "goal") t = `<span class="who">${nm(e.toKey, e.to)}</span> completed their goal! &#127881;`;
+    else if (e.self) t = `<span class="who">${nm(e.toKey, e.to)}</span> found their <span class="item">${esc(e.item)}</span>`;
+    else t = `<span class="who">${nm(e.fromKey, e.from)}</span> sent <span class="item">${esc(e.item)}</span> to <span class="who">${nm(e.toKey, e.to)}</span>`;
+    return `<div class="apo-ev ${e.kind}"><i class="dot"></i><div class="t">${t}</div></div>`;
+  }
+
+  function feedFilter(e, cfg) {
+    if (e.kind === "goal") return true;
+    if (cfg.feedKinds && !cfg.feedKinds.includes(e.kind)) return false;
+    if (cfg.players && cfg.players.length && !(cfg.players.includes(e.toKey) || cfg.players.includes(e.fromKey))) return false;
+    return true;
+  }
+
+  // ---------- Mount an overlay into an element ----------
+  function mount(root, cfg, session) {
+    root.className = `apo bg-${cfg.bg || "panel"} lay-${cfg.layout === "horizontal" ? "h" : "v"}`;
+    const st = root.style;
+    st.setProperty("--acc", cfg.accent || "#7c5cff"); st.setProperty("--txt", cfg.text || "#ffffff");
+    st.setProperty("--scale", cfg.scale || 1); st.setProperty("--font", `"${cfg.font || "Inter"}"`);
+    st.setProperty("--panel", hexA(cfg.panel || "#0c0c14", cfg.panelAlpha ?? 0.78)); st.setProperty("--solid", cfg.solid || "#111111");
+    st.width = cfg.width ? cfg.width + "px" : "";
+    let feedEl = null, lastErr = null;
+    const draw = (s, fresh) => {
+      if (s.error && !s.players.length) { root.innerHTML = `<div class="apo-err">${esc(s.error)}</div>`; return; }
+      if (cfg.type === "feed") {
+        if (!feedEl) { root.innerHTML = `<div class="apo-feed${cfg.feedDir === "up" ? " up" : ""}"></div>`; feedEl = root.firstChild; }
+        fresh.filter(e => feedFilter(e, cfg)).forEach((e, i) => setTimeout(() => {
+          feedEl.insertAdjacentHTML("afterbegin", feedEventHTML(e, cfg));
+          const el = feedEl.firstElementChild;
+          while (feedEl.children.length > (cfg.feedMax || 5)) feedEl.lastElementChild.remove();
+          if (cfg.feedTTL > 0) setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 520); }, cfg.feedTTL * 1000);
+        }, i * 900));
+        return;
+      }
+      const flash = new Set(fresh.map(e => e.toKey));
+      root.innerHTML = cfg.type === "total" ? renderTotal(s, cfg) : cfg.type === "card" ? renderCard(s, cfg) : renderLeaderboard(s, cfg, flash);
+    };
+    session.on(draw);
+    if (session.ready) draw(session, cfg.type === "feed" && cfg.feedSeed ? seedEvents(session) : []);
+    return () => { session.listeners = session.listeners.filter(f => f !== draw); };
+  }
+
+  function seedEvents(s) { return s.players.flatMap(p => (p.recent || []).slice(0, 1)).slice(0, 4); }
+  function hexA(hex, a) { const n = parseInt(hex.replace("#", ""), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+
+  // ---------- Standalone overlay boot ----------
+  async function runStandalone(cfg) {
+    document.documentElement.style.background = "transparent"; document.body.style.background = "transparent"; document.body.style.margin = "0";
+    const root = document.createElement("div"); root.style.padding = "8px"; document.body.appendChild(root);
+    const s = cfg.demo ? new DemoSession("demo") : new Session(cfg.link);
+    mount(root, cfg, s);
+    const boot = async () => { try { await s.init(); } catch (e) { s.error = e.message; s.emit(); setTimeout(boot, 15000); return; }
+      setInterval(() => s.refresh(), Math.max(10, cfg.interval || 30) * 1000); };
+    boot();
+  }
+
+  return { parseLink, Session, DemoSession, mount, runStandalone, esc };
+})();
+</script>
+
+<!-- ============ STUDIO UI ============ -->
+<div id="studio">
+<header>
+  <div class="logo"></div><h1>Archipelago Overlay Studio</h1>
+  <div class="st" id="status"><i></i><span>Not connected</span></div>
+</header>
+<main>
+  <section>
+    <div class="card">
+      <h2>1 · Connect</h2>
+      <label for="link">Archipelago room link</label>
+      <input type="text" id="link" placeholder="https://archipelago.gg/room/AbCdEf123…">
+      <div class="row" style="margin-top:10px">
+        <button class="pri" id="btnConnect" style="flex:1">Connect</button>
+        <button id="btnDemo">Try demo data</button>
+      </div>
+      <div class="msg" id="connMsg">Use the <b>room</b> link (it includes player names). Tracker links work too. Self-hosted servers are fine.</div>
+    </div>
+
+    <div class="card">
+      <h2>2 · Overlay type</h2>
+      <div class="seg" id="typeSeg">
+        <button data-v="leaderboard" class="on">Leaderboard</button>
+        <button data-v="card">Player card</button>
+        <button data-v="total">Total progress</button>
+        <button data-v="feed">Item feed</button>
+      </div>
+      <label for="title">Title (optional)</label>
+      <input type="text" id="title" value="Multiworld Progress">
+      <div id="optLeader">
+        <div class="grid2">
+          <div><label>Layout</label><select id="layout"><option value="vertical">Vertical list</option><option value="horizontal">Horizontal bar</option></select></div>
+          <div><label>Sort by</label><select id="sort"><option value="progress">Progress %</option><option value="checks">Checks done</option><option value="slot">Slot order</option><option value="name">Name</option></select></div>
+          <div><label>Show</label><select id="valueMode"><option value="percent">Percent</option><option value="count">Checks x/y</option><option value="both">Both</option></select></div>
+          <div><label>Max rows (0 = all)</label><input type="number" id="limit" value="0" min="0"></div>
+        </div>
+      </div>
+      <div id="optCard" hidden>
+        <div class="grid2">
+          <div><label>Player</label><select id="cardPlayer"></select></div>
+          <div><label>Recent items shown</label><input type="number" id="cardItems" value="4" min="0" max="8"></div>
+        </div>
+      </div>
+      <div id="optFeed" hidden>
+        <label>Show items of type</label>
+        <div class="seg" id="kindSeg">
+          <button data-v="prog" class="on">Progression</button><button data-v="useful" class="on">Useful</button>
+          <button data-v="filler">Filler</button><button data-v="trap" class="on">Traps</button>
+        </div>
+        <div class="grid2">
+          <div><label>Max visible</label><input type="number" id="feedMax" value="5" min="1" max="20"></div>
+          <div><label>Hide after (sec, 0 = never)</label><input type="number" id="feedTTL" value="12" min="0"></div>
+        </div>
+        <label>New items appear at</label>
+        <select id="feedDir"><option value="down">Top (list grows down)</option><option value="up">Bottom (list grows up)</option></select>
+        <div class="hint">The feed shows items sent <i>after</i> the overlay loads. Archipelago's API refreshes about once a minute, so items arrive in small batches.</div>
+      </div>
+      <label class="chk"><input type="checkbox" id="showGame" checked> Show game names</label>
+    </div>
+
+    <div class="card">
+      <h2>3 · Players</h2>
+      <div class="msg" id="pHint" style="margin:0 0 8px">Tick who to include (none ticked = everyone). Rename for stream if you like.</div>
+      <div class="plist" id="plist"><div class="p" style="grid-template-columns:1fr"><span class="g">Connect first.</span></div></div>
+      <div class="row" style="margin-top:8px"><button id="pAll" style="flex:1">All</button><button id="pNone" style="flex:1">None</button></div>
+    </div>
+
+    <div class="card">
+      <h2>4 · Style</h2>
+      <label>Background</label>
+      <div class="seg" id="bgSeg">
+        <button data-v="transparent">Transparent</button><button data-v="panel" class="on">Glass panel</button><button data-v="solid">Solid (chroma)</button>
+      </div>
+      <div class="grid2">
+        <div><label>Accent</label><input type="color" id="accent" value="#7c5cff"></div>
+        <div><label>Text</label><input type="color" id="text" value="#ffffff"></div>
+        <div><label>Panel color</label><input type="color" id="panel" value="#0c0c14"></div>
+        <div><label>Panel opacity</label><input type="range" id="panelAlpha" min="0" max="1" step="0.05" value="0.78"></div>
+        <div><label>Font</label><select id="font"><option>Inter</option><option>Rubik</option><option>Bebas Neue</option><option>Press Start 2P</option><option>JetBrains Mono</option></select></div>
+        <div><label>Solid / chroma color</label><input type="color" id="solid" value="#00b140"></div>
+        <div><label>Size <span id="scaleV">1.0×</span></label><input type="range" id="scale" min="0.6" max="2.5" step="0.05" value="1"></div>
+        <div><label>Width px (0 = auto)</label><input type="number" id="width" value="380" min="0"></div>
+      </div>
+      <label>Refresh every (seconds)</label>
+      <input type="number" id="interval" value="30" min="10">
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="card">
+      <div class="pvbar">
+        <h2 style="margin:0">Live preview</h2><span class="sp"></span>
+        <button id="pvBg">Background: checker</button>
+        <button id="pvRefresh">Refresh now</button>
+      </div>
+      <div class="preview" id="preview"><div id="pvRoot"></div></div>
+    </div>
+    <div class="card out">
+      <h2>5 · Add to OBS / Streamlabs</h2>
+      <div class="row" id="outBtns"><button class="pri" id="btnExport" style="flex:1" disabled>Download overlay file</button><button id="btnCopy" disabled>Copy overlay URL</button></div>
+      <div id="hostedSteps" hidden>
+      <ol class="steps">
+        <li>Click <b>Copy overlay URL</b>.</li>
+        <li>In OBS: <b>Sources → + → Browser</b>, paste it as the <b>URL</b> (leave “Local file” unticked).</li>
+        <li>Set width/height to fit (e.g. 420 × 600). Transparency works automatically.</li>
+        <li>Make one source per overlay. Settings live in the URL, so it keeps working after page updates.</li>
+      </ol>
+      </div>
+      <div id="localSteps">
+      <ol class="steps">
+        <li>Download the overlay <b>.html</b> file and keep it somewhere permanent.</li>
+        <li>In OBS: <b>Sources → + → Browser</b>, tick <b>Local file</b>, pick the file.</li>
+        <li>Set width/height to fit (e.g. 420 × 600). Transparency works automatically.</li>
+        <li>Make one file per overlay. It keeps updating for the whole session.</li>
+      </ol>
+      </div>
+      <div class="hint" id="urlHint">Overlay URL:</div>
+      <code id="urlOut">—</code>
+    </div>
+  </section>
+</main>
+</div>
+
+<script>
+(() => {
+  // Overlay mode via URL hash
+  const hm = location.hash.match(/overlay=([^&]+)/);
+  if (hm) {
+    document.getElementById("studio").remove(); document.body.classList.add("overlay-mode");
+    try { APO.runStandalone(JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(hm[1])))))); }
+    catch (e) { document.body.innerHTML = '<div style="color:#f88;font:14px sans-serif">Invalid overlay config</div>'; }
+    return;
+  }
+
+  const $ = id => document.getElementById(id);
+  const S = { session: null, demo: false, type: "leaderboard", bg: "panel", kinds: ["prog","useful","trap"], selected: new Set(), names: {}, timer: null, unmount: null };
+
+  function setStatus(kind, txt) { const el = $("status"); el.className = "st " + kind; el.querySelector("span").textContent = txt; }
+
+  function cfg() {
+    return {
+      demo: S.demo, link: $("link").value.trim(), type: S.type, title: $("title").value,
+      layout: $("layout").value, sort: $("sort").value, valueMode: $("valueMode").value, limit: +$("limit").value || 0,
+      cardPlayer: $("cardPlayer").value, cardItems: +$("cardItems").value,
+      feedKinds: S.kinds, feedMax: +$("feedMax").value || 5, feedTTL: +$("feedTTL").value, feedDir: $("feedDir").value,
+      showGame: $("showGame").checked, players: [...S.selected], names: { ...S.names },
+      bg: S.bg, accent: $("accent").value, text: $("text").value, panel: $("panel").value, panelAlpha: +$("panelAlpha").value,
+      solid: $("solid").value, font: $("font").value, scale: +$("scale").value, width: +$("width").value || 0,
+      interval: Math.max(10, +$("interval").value || 30), decimals: 1
+    };
+  }
+
+  function rebuildPreview() {
+    if (S.unmount) S.unmount();
+    const root = $("pvRoot"); root.innerHTML = ""; root.removeAttribute("style");
+    if (!S.session) { root.innerHTML = '<div style="color:#cfd3e0;font-size:13px">Connect a room or try demo data to see a preview.</div>'; return; }
+    const c = cfg(); c.feedSeed = true;
+    S.unmount = APO.mount(root, c, S.session);
+    $("optLeader").hidden = !(S.type === "leaderboard");
+    $("optCard").hidden = S.type !== "card"; $("optFeed").hidden = S.type !== "feed";
+    $("layout").closest("div").hidden = false;
+    updateOutput();
+  }
+
+  function encodeCfg(c) { return btoa(unescape(encodeURIComponent(JSON.stringify(c)))); }
+  function updateOutput() {
+    const ok = !!S.session; $("btnExport").disabled = !ok; $("btnCopy").disabled = !ok;
+    if (!ok) return;
+    const base = location.href.split("#")[0];
+    $("urlOut").textContent = base + "#overlay=" + encodeURIComponent(encodeCfg(cfg()));
+  }
+
+  function renderPlayers() {
+    const s = S.session; const box = $("plist");
+    if (!s || !s.players.length) return;
+    const sorted = [...s.players].sort((a, b) => a.slot - b.slot);
+    box.innerHTML = sorted.map(p => `<div class="p">
+      <input type="checkbox" data-k="${APO.esc(p.key)}" ${S.selected.has(p.key) ? "checked" : ""}>
+      <div style="min-width:0"><div>${APO.esc(p.name)}</div><div class="g">${APO.esc(p.game)} · ${p.checks}/${p.total}</div></div>
+      <input type="text" placeholder="Stream name" data-n="${APO.esc(p.key)}" value="${APO.esc(S.names[p.key] || "")}">
+    </div>`).join("");
+    const cp = $("cardPlayer"), prev = cp.value;
+    cp.innerHTML = sorted.map(p => `<option value="${APO.esc(p.key)}">${APO.esc(S.names[p.key] || p.name)}</option>`).join("");
+    if (prev && sorted.some(p => p.key === prev)) cp.value = prev;
+  }
+
+  async function connect(demo) {
+    clearInterval(S.timer); S.demo = demo;
+    $("connMsg").className = "msg"; $("connMsg").textContent = demo ? "Loading demo…" : "Connecting…";
+    setStatus("", "Connecting…");
+    const s = demo ? new APO.DemoSession("demo") : new APO.Session($("link").value);
+    try { await s.init(); }
+    catch (e) {
+      const m = /Failed to fetch|NetworkError/i.test(e.message) ? "Couldn't reach the server. Check the link, and that this file is opened in a normal browser (not a sandboxed preview)." : e.message;
+      $("connMsg").className = "msg err"; $("connMsg").textContent = m; setStatus("err", "Error"); return;
+    }
+    S.session = s; S.selected = new Set(); S.names = {};
+    s.on((ss) => { setStatus(ss.error ? "err" : "live", ss.error ? "Update failed – retrying" : (demo ? "Demo · " : "Live · ") + new Date().toLocaleTimeString()); });
+    setStatus("live", (demo ? "Demo · " : "Live · ") + new Date().toLocaleTimeString());
+    const goals = s.players.filter(p => p.status >= 30).length;
+    $("connMsg").textContent = `${demo ? "Demo" : "Connected"}: ${s.players.length} players, ${goals} finished.`;
+    renderPlayers(); rebuildPreview();
+    S.timer = setInterval(() => s.refresh(), (demo ? 4 : cfg().interval) * 1000);
+    try { if (!demo) localStorage.setItem("apo.link", $("link").value.trim()); } catch {}
+  }
+
+  // Wiring
+  $("btnConnect").onclick = () => connect(false);
+  $("link").addEventListener("keydown", e => { if (e.key === "Enter") connect(false); });
+  $("btnDemo").onclick = () => connect(true);
+  const seg = (id, fn) => $(id).addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; fn(b); rebuildPreview(); });
+  seg("typeSeg", b => { [...$("typeSeg").children].forEach(x => x.classList.toggle("on", x === b)); S.type = b.dataset.v;
+    if (S.type === "total" && $("title").value === "Multiworld Progress") {} });
+  seg("bgSeg", b => { [...$("bgSeg").children].forEach(x => x.classList.toggle("on", x === b)); S.bg = b.dataset.v; });
+  seg("kindSeg", b => { b.classList.toggle("on"); S.kinds = [...$("kindSeg").children].filter(x => x.classList.contains("on")).map(x => x.dataset.v); });
+  document.querySelectorAll("#studio input:not(#link), #studio select").forEach(el => {
+    if (el.closest("#plist")) return;
+    el.addEventListener("input", () => { if (el.id === "scale") $("scaleV").textContent = (+el.value).toFixed(2) + "×"; rebuildPreview(); });
+  });
+  $("plist").addEventListener("change", e => { const k = e.target.dataset.k; if (!k) return; e.target.checked ? S.selected.add(k) : S.selected.delete(k); rebuildPreview(); });
+  $("plist").addEventListener("input", e => { const k = e.target.dataset.n; if (!k) return; const v = e.target.value.trim(); if (v) S.names[k] = v; else delete S.names[k];
+    clearTimeout(S.nt); S.nt = setTimeout(() => { const cp = $("cardPlayer").value; renderPlayersOptionsOnly(); $("cardPlayer").value = cp; rebuildPreview(); }, 250); });
+  function renderPlayersOptionsOnly() { const s = S.session; if (!s) return;
+    $("cardPlayer").innerHTML = [...s.players].sort((a, b) => a.slot - b.slot).map(p => `<option value="${APO.esc(p.key)}">${APO.esc(S.names[p.key] || p.name)}</option>`).join(""); }
+  $("pAll").onclick = () => { if (!S.session) return; S.selected = new Set(S.session.players.map(p => p.key)); renderPlayers(); rebuildPreview(); };
+  $("pNone").onclick = () => { S.selected = new Set(); renderPlayers(); rebuildPreview(); };
+  $("pvRefresh").onclick = () => S.session && S.session.refresh();
+  let pvGame = false; $("pvBg").onclick = () => { pvGame = !pvGame; $("preview").classList.toggle("game", pvGame); $("pvBg").textContent = "Background: " + (pvGame ? "game" : "checker"); };
+
+  $("btnExport").onclick = () => {
+    const c = cfg();
+    const html = `<!DOCTYPE html>\n<html><head><meta charset="utf-8"><title>AP Overlay – ${APO.esc(c.type)}</title>\n` +
+      `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(c.font).replace(/%20/g, "+")}:wght@400;600;700;800&display=swap">\n` +
+      `<style>html,body{margin:0;background:transparent;overflow:hidden}</style>\n<style>${$("overlay-css").textContent}</style>\n</head><body>\n` +
+      `<script>${$("runtime").textContent}<\/script>\n<script>APO.runStandalone(${JSON.stringify(c).replace(/</g, "\\u003c")});<\/script>\n</body></html>`;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    a.download = `ap-overlay-${c.type}${c.type === "card" ? "-" + (S.names[c.cardPlayer] || (S.session.players.find(p => p.key === c.cardPlayer) || {}).name || "") : ""}.html`.replace(/[^\w.-]+/g, "_");
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  $("btnCopy").onclick = async () => { try { await navigator.clipboard.writeText($("urlOut").textContent); $("btnCopy").textContent = "Copied!"; } catch { $("btnCopy").textContent = "Select & copy below"; } setTimeout(() => $("btnCopy").textContent = "Copy overlay URL", 1500); };
+
+  if (/^https?:$/.test(location.protocol)) {
+    $("hostedSteps").hidden = false; $("localSteps").hidden = true;
+    $("btnCopy").classList.add("pri"); $("btnExport").classList.remove("pri");
+    $("btnCopy").style.flex = "1"; $("btnExport").style.flex = "0 0 auto"; $("btnExport").textContent = "Download as file";
+    $("outBtns").prepend($("btnCopy"));
+  }
+  try { const q = new URLSearchParams(location.search).get("room"); const l = q || localStorage.getItem("apo.link"); if (l) $("link").value = l; if (q) connect(false); } catch {}
+  rebuildPreview();
+})();
+</script>
+</body>
+</html>

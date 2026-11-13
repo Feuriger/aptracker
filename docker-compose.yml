@@ -1,0 +1,34 @@
+# Archipelago Overlay Studio – NAS stack
+# app:         the website (pulled from GitHub Container Registry)
+# watchtower:  checks every 5 min for a new image and restarts the app with it
+# cloudflared: Cloudflare Tunnel → https://aptracker.fireflo.at (no port forwarding needed)
+services:
+  aptracker:
+    image: ghcr.io/feuriger/aptracker:latest
+    container_name: aptracker
+    restart: unless-stopped
+    ports:
+      - "8088:80"          # optional: local access at http://NAS-IP:8088
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  watchtower:
+    image: nickfedor/watchtower:latest   # maintained fork of containrrr/watchtower
+    container_name: aptracker-watchtower
+    restart: unless-stopped
+    environment:
+      - WATCHTOWER_LABEL_ENABLE=true   # only update containers with the label above
+      - WATCHTOWER_POLL_INTERVAL=300
+      - WATCHTOWER_CLEANUP=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: aptracker-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      - aptracker
