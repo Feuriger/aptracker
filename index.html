@@ -46,6 +46,11 @@
 .apo-card .apo-cnum{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.3em}
 .apo-card .apo-cnum b{font-size:1.6em;font-variant-numeric:tabular-nums}
 .apo-card .apo-bar{height:.6em}
+.apo-card.rot{animation:apoCardIn .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes apoCardIn{from{opacity:0;transform:translateY(.6em)}to{opacity:1;transform:none}}
+.apo-dots{display:flex;gap:.3em;justify-content:center;margin-top:.6em}
+.apo-dots i{width:.38em;height:.38em;border-radius:50%;background:var(--track)}
+.apo-dots i.on{background:var(--acc)}
 .apo-card ul{list-style:none;margin:.6em 0 0;padding:0;font-size:.8em}
 .apo-card li{padding:.2em 0;border-top:1px solid var(--track);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .apo-card li span{color:var(--sub)}
@@ -295,18 +300,21 @@ const APO = (() => {
       <div class="apo-bar"><i style="width:${v}%"></i></div></div>`;
   }
 
-  function renderCard(s, cfg) {
+  function renderCard(s, cfg, rot) {
     const all = visiblePlayers(s, { ...cfg, players: [], limit: 0, sort: "slot" });
-    const p = all.find(x => x.key === cfg.cardPlayer) || all[0];
+    const want = rot ? rot.key : cfg.cardPlayer;
+    const p = all.find(x => x.key === want) || all[0];
     if (!p) return `<div class="apo-box apo-empty">No player.</div>`;
     const recent = (p.recent || []).slice(0, cfg.cardItems ?? 4);
-    return `<div class="apo-box apo-card">
+    const dots = rot && rot.count > 1 && cfg.cardDots !== false ? `<div class="apo-dots">${Array.from({ length: rot.count }, (_, i) => `<i${i === rot.idx ? ' class="on"' : ""}></i>`).join("")}</div>` : "";
+    return `<div class="apo-box apo-card${rot && rot.anim ? " rot" : ""}">
       ${cfg.title ? `<div class="apo-title">${esc(cfg.title)}</div>` : ""}
       <div class="apo-cname">${esc(p.name)}${p.status >= 30 ? ` <span style="color:var(--goal)">&#9733;</span>` : ""}</div>
       ${cfg.showGame ? `<div class="apo-cgame">${esc(p.game)}</div>` : ""}
       <div class="apo-cnum"><b>${fmtPct(pct(p), cfg.decimals ?? 1)}</b><span style="color:var(--sub)">${p.checks} / ${p.total} checks</span></div>
       <div class="apo-bar${p.status >= 30 ? " goal" : ""}"><i style="width:${pct(p)}%;${p.status >= 30 ? "background:var(--goal)" : ""}"></i></div>
       ${recent.length ? `<ul>${recent.map(e => `<li><b style="color:${e.kind === "prog" ? "var(--acc)" : e.kind === "trap" ? "#ff7a7a" : "inherit"}">${esc(e.item)}</b> <span>${e.self ? "found it themselves" : "from " + esc((cfg.names && cfg.names[e.fromKey]) || e.from)}</span></li>`).join("")}</ul>` : ""}
+      ${dots}
     </div>`;
   }
 
@@ -348,11 +356,21 @@ const APO = (() => {
         return;
       }
       const flash = new Set(fresh.map(e => e.toKey));
+      if (cfg.type === "card" && cfg.cardRotate) {
+        const list = visiblePlayers(s, { ...cfg, limit: 0 });
+        if (!list.length) { root.innerHTML = `<div class="apo-box apo-empty">No players selected.</div>`; return; }
+        const idx = rotIdx % list.length;
+        root.innerHTML = renderCard(s, cfg, { key: list[idx].key, idx, count: list.length, anim: rotAnim });
+        rotAnim = false; return;
+      }
       root.innerHTML = cfg.type === "total" ? renderTotal(s, cfg) : cfg.type === "card" ? renderCard(s, cfg) : renderLeaderboard(s, cfg, flash);
     };
+    let rotIdx = 0, rotAnim = true, rotTimer = null;
+    if (cfg.type === "card" && cfg.cardRotate)
+      rotTimer = setInterval(() => { if (!session.players.length) return; rotIdx++; rotAnim = true; draw(session, []); }, Math.max(3, cfg.cardRotateSec || 10) * 1000);
     session.on(draw);
     if (session.ready) draw(session, cfg.type === "feed" && cfg.feedSeed ? seedEvents(session) : []);
-    return () => { session.listeners = session.listeners.filter(f => f !== draw); };
+    return () => { clearInterval(rotTimer); session.listeners = session.listeners.filter(f => f !== draw); };
   }
 
   function seedEvents(s) { return s.players.flatMap(p => (p.recent || []).slice(0, 1)).slice(0, 4); }
@@ -414,6 +432,15 @@ const APO = (() => {
         <div class="grid2">
           <div><label>Player</label><select id="cardPlayer"></select></div>
           <div><label>Recent items shown</label><input type="number" id="cardItems" value="4" min="0" max="8"></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="cardRotate"> Rotate through players</label>
+        <div id="rotOpts" hidden>
+          <div class="grid2">
+            <div><label>Seconds per player</label><input type="number" id="cardRotateSec" value="10" min="3"></div>
+            <div><label>Order</label><select id="rotSort"><option value="slot">Slot order</option><option value="progress">Progress %</option><option value="name">Name</option></select></div>
+          </div>
+          <label class="chk"><input type="checkbox" id="cardDots" checked> Show position dots</label>
+          <div class="hint">Rotates through the players ticked in step 3 (none ticked = everyone).</div>
         </div>
       </div>
       <div id="optFeed" hidden>
@@ -516,8 +543,9 @@ const APO = (() => {
   function cfg() {
     return {
       demo: S.demo, link: $("link").value.trim(), type: S.type, title: $("title").value,
-      layout: $("layout").value, sort: $("sort").value, valueMode: $("valueMode").value, limit: +$("limit").value || 0,
+      layout: $("layout").value, sort: (S.type === "card" && $("cardRotate").checked) ? $("rotSort").value : $("sort").value, valueMode: $("valueMode").value, limit: +$("limit").value || 0,
       cardPlayer: $("cardPlayer").value, cardItems: +$("cardItems").value,
+      cardRotate: S.type === "card" && $("cardRotate").checked, cardRotateSec: Math.max(3, +$("cardRotateSec").value || 10), cardDots: $("cardDots").checked,
       feedKinds: S.kinds, feedMax: +$("feedMax").value || 5, feedTTL: +$("feedTTL").value, feedDir: $("feedDir").value,
       showGame: $("showGame").checked, players: [...S.selected], names: { ...S.names },
       bg: S.bg, accent: $("accent").value, text: $("text").value, panel: $("panel").value, panelAlpha: +$("panelAlpha").value,
@@ -534,6 +562,7 @@ const APO = (() => {
     S.unmount = APO.mount(root, c, S.session);
     $("optLeader").hidden = !(S.type === "leaderboard");
     $("optCard").hidden = S.type !== "card"; $("optFeed").hidden = S.type !== "feed";
+    $("rotOpts").hidden = !$("cardRotate").checked; $("cardPlayer").disabled = $("cardRotate").checked;
     $("layout").closest("div").hidden = false;
     updateOutput();
   }
@@ -611,7 +640,7 @@ const APO = (() => {
       `<script>${$("runtime").textContent}<\/script>\n<script>APO.runStandalone(${JSON.stringify(c).replace(/</g, "\\u003c")});<\/script>\n</body></html>`;
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-    a.download = `ap-overlay-${c.type}${c.type === "card" ? "-" + (S.names[c.cardPlayer] || (S.session.players.find(p => p.key === c.cardPlayer) || {}).name || "") : ""}.html`.replace(/[^\w.-]+/g, "_");
+    a.download = `ap-overlay-${c.type}${c.type === "card" ? "-" + (c.cardRotate ? "rotating" : "") + (c.cardRotate ? "" : S.names[c.cardPlayer] || (S.session.players.find(p => p.key === c.cardPlayer) || {}).name || "") : ""}.html`.replace(/[^\w.-]+/g, "_");
     document.body.appendChild(a); a.click(); a.remove();
   };
   $("btnCopy").onclick = async () => { try { await navigator.clipboard.writeText($("urlOut").textContent); $("btnCopy").textContent = "Copied!"; } catch { $("btnCopy").textContent = "Select & copy below"; } setTimeout(() => $("btnCopy").textContent = "Copy overlay URL", 1500); };
